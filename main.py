@@ -49,7 +49,6 @@ class SingleLayerDSSM():
 
 	def activation(self, u):
 		r = torch.max(torch.min(u, torch.ones_like(u)), torch.zeros_like(u))
-		print(r.data)
 		return r
 
 	def get_output(self):
@@ -82,7 +81,7 @@ class DSSM():
 													self.config)
 
 	def run(self):
-		inp = torch.ones(10, device=self.config.device)
+		inp = torch.randn(10, device=self.config.device)
 		while True:
 			# neural dynamics loop
 			while True:
