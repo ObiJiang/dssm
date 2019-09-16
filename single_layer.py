@@ -1,22 +1,23 @@
 import torch
 
-class SingleLayerDSSM():
-	def __init__(self, layer_ind, input_dim, hidden_dim, config):
-		self.config = config
-		self.input_dim = input_dim
-		self.hidden_dim = hidden_dim
-		self.layer_ind = layer_ind
+class SingleLayerDSSMForMnist():
+	def __init__(self, config):
+		self.input_dims = config.input_dims
+		self.ouput_dims = config.hidden_dims
+		self.layer_ind = config.layer_ind
+
+		self.network_config = config.network_config
 
 		# weights
-		self.W = torch.randn(input_dim, hidden_dim, device = config.device)
-		self.L = torch.randn(hidden_dim, hidden_dim, device = config.device)
+		self.W = torch.randn(input_dim, hidden_dim, device = self.network_config.device)
+		self.L = torch.randn(hidden_dim, hidden_dim, device = self.network_config.device)
 
 		# activations
 		self.u = torch.zeros(hidden_dim)
 		self.r = self.activation(self.u)
 
 		# connectivies
-		self.c_W_hat = torch.ones(input_dim, hidden_dim) # there is supposed to be reciprocal
+		self.c_W_hat = torch.ones(input_dim, hidden_dim) # this is supposed to be reciprocal
 		self.c_L_hat = torch.ones(hidden_dim, hidden_dim)
 
 		# feedback_parameter
