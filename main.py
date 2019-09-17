@@ -81,6 +81,7 @@ class DSSM():
 	def single_pass(self, inp, epoch):
 		# neural dynamics loop
 		delta = np.ones(self.config.num_layers) * np.inf
+		conversion_ticker = 0
 		for update_step in range(3000):
 
 			for layer_ind in range(self.config.num_layers):
@@ -100,6 +101,7 @@ class DSSM():
 
 			# Hugo's parameter
 			if delta.any() < 1e-4:
+				conversion_ticker += 1
 				break
 
 		for layer_ind in range(self.config.num_layers):
@@ -109,7 +111,7 @@ class DSSM():
 				cur_inp = self.layers[layer_ind - 1].get_output()
 			self.layers[layer_ind].plasticity_update(cur_inp, epoch)
 
-		return delta.sum()
+		return delta.sum(), conversion_ticker
 
 	def run(self):
 		# mnist data lodaer
@@ -124,12 +126,15 @@ class DSSM():
 
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
+			conversion_ticker = 0
 			for image, _ in train_loader:
 				image = image.to(self.config.device)
 				image = image.view(-1)
-				loss += self.single_pass(image, epoch)
+				loss_per_image, conversion_ticker_per_image = self.single_pass(image, epoch)
+				loss += 1
+				conversion_ticker += conversion_ticker_per_image
 
-			print("{:} Epoch: loss {:}".format(epoch, loss))
+			print("{:} Epoch: loss {:}, conversion".format(epoch, loss, conversion_ticker))
 
 model = DSSM()
 model.create_network()
