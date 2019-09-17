@@ -127,7 +127,7 @@ class DSSM():
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
 			conversion_ticker = 0
-			for image, _ in train_loader:
+			for idx, (image, _) in enumerate(train_loader):
 				image = image.to(self.config.device)
 				image = image.view(-1)
 				loss_per_image, conversion_ticker_per_image = self.single_pass(image, epoch)
