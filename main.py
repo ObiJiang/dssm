@@ -15,7 +15,7 @@ random_seed = 1
 torch.manual_seed(random_seed)
 
 class DSSM():
-	def __init__(self):
+	def __init__(self, args):
 		config = AttrDict()
 
 		input_dims = [28, 28, 1]
@@ -58,6 +58,9 @@ class DSSM():
 		# training 
 		config.num_epochs = 10
 		config.batch_size = 300
+
+		# data
+		config.data_dir = args.data_dir
 
 		self.config = config
 
@@ -118,7 +121,7 @@ class DSSM():
 	def run(self):
 		# mnist data lodaer
 		train_loader = torch.utils.data.DataLoader(
-		  torchvision.datasets.MNIST('./data', train=True, download=True,
+		  torchvision.datasets.MNIST(self.config.data_dir, train=True, download=True,
 		                             transform=torchvision.transforms.Compose([
 		                               torchvision.transforms.ToTensor(),
 		                               torchvision.transforms.Normalize(
@@ -149,11 +152,12 @@ if __name__ == '__main__':
 
 	# save/load model
 	parser.add_argument('--model_save_dir', default='./save.pickle')
+	parser.add_argument('--data_dir', default='./data')
 
 	config = parser.parse_args()
 
 if config.train:
-	model = DSSM()
+	model = DSSM(config)
 	model.create_network()
 	model.run()
 
