@@ -45,6 +45,9 @@ class SingleLayerDSSMForMnist():
 		else: 
 			self.feedback_parameter = 1
 
+	def state_dict(self):
+		return vars(self)
+
 	def create_c_W(self):
 		"""
 		compute once, so it may not be highly optimized.
@@ -152,7 +155,10 @@ class SingleLayerDSSMForMnist():
 	def plasticity_update(self, prev_layer,epoch):
 		lr = max(self.network_config.lr/(1+self.network_config.decay*epoch), self.network_config.lr_floor)
 
-		update_step = lr * self.network_config.gamma ** (self.layer_ind - self.network_config.num_layers)
+		if self.network_config.gamma > 0:
+			update_step = lr * self.network_config.gamma ** (self.layer_ind - self.network_config.num_layers)
+		else:
+			update_step = lr
 
 		dW = update_step * (self.r.t() @ prev_layer * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
 		dL = update_step / 2 * (self.r.t() @ self.r * torch.sign(self.c_L_hat) 
@@ -162,7 +168,7 @@ class SingleLayerDSSMForMnist():
 		self.L += dL
 
 	def feedback(self):
-		return self.network_config.gamma * self.r @ self.W.t() 
+		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
 		r = torch.max(torch.min(u, torch.ones_like(u)), torch.zeros_like(u))

@@ -8,6 +8,7 @@ from single_layer import SingleLayerDSSMForMnist
 # misc
 from misc import AttrDict
 from tqdm import tqdm
+import argparse
 
 # set random seed
 random_seed = 1
@@ -26,11 +27,11 @@ class DSSM():
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [1, 1]
+		config.nps = [4, 16]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
-		config.io_ths = [1, 1]
+		config.io_ths = [2, 4]
 		config.lateral_ths = [0, 4]
 
 		# set up number of units per layer
@@ -42,7 +43,7 @@ class DSSM():
 			assert(next_num_units.all() > 0) # must be positive
 			config.num_units.append(next_num_units)
 
-		config.gamma = 0.01 # feedback parameter
+		config.gamma = 0.00 # feedback parameter
 
 		# host and device
 		config.host = torch.device("cpu")
@@ -55,7 +56,7 @@ class DSSM():
 		config.decay = 2
 
 		# training 
-		config.num_epochs = 100
+		config.num_epochs = 10
 		config.batch_size = 300
 
 		self.config = config
@@ -128,19 +129,41 @@ class DSSM():
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
 			conversion_ticker = 0
-			for idx, (image, _) in enumerate(train_loader):
+			for idx, (image, label) in enumerate(train_loader):
 				image = image.to(self.config.device)
 				image = image.view([self.config.batch_size, -1])
 
 				loss_per_image, conversion_ticker_per_image = self.single_pass(image, epoch)
-				loss += 1
+				loss += loss_per_image
 				conversion_ticker += conversion_ticker_per_image
+				break
+			
+			print("{:} Epoch: loss {:}".format(epoch, loss))
 
-			print("{:} Epoch: loss {:}, conversion".format(epoch, loss, conversion_ticker))
+if __name__ == '__main__':
+	# arguments
+	parser = argparse.ArgumentParser()
 
-model = DSSM()
-model.create_network()
-model.run()
+	# train/test
+	parser.add_argument('--train', default=False, action='store_true')
+
+	# save/load model
+	parser.add_argument('--model_save_dir', default='./save.pickle')
+
+	config = parser.parse_args()
+
+if config.train:
+	model = DSSM()
+	model.create_network()
+	model.run()
+
+	# save model
+	torch.save(vars(model), config.model_save_dir)
+else:
+	load_dict = torch.load(config.model_save_dir)
+	model = DSSM()
+	model.__dict__.update(load_dict)
+	model.run()
 
 
 
