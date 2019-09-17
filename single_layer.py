@@ -36,7 +36,7 @@ class SingleLayerDSSMForMnist():
 		# 	device = self.network_config.device)
 
 		# activations
-		self.u = torch.zeros(self.output_linear_dim)
+		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim)
 		self.r = self.activation(self.u)
 
 		# feedback_parameter
@@ -138,7 +138,7 @@ class SingleLayerDSSMForMnist():
 
 	def dynamics(self, prev_layer, feedback, step):
 		r_save = self.r.clone()
-		du = - self.u + self.W @ prev_layer - (self.L - torch.eye(self.output_linear_dim)) @ self.r + feedback
+		du = - self.u + prev_layer @ self.W.t() - self.r @ (self.L - torch.eye(self.output_linear_dim)).t() + feedback
 		
 		# Hugo's euler update rule
 		lr = max((self.network_config.euler_lr/(1+0.005*step)), 0.05)
@@ -154,15 +154,15 @@ class SingleLayerDSSMForMnist():
 
 		update_step = lr * self.network_config.gamma ** (self.layer_ind - self.network_config.num_layers)
 
-		dW = update_step * (torch.einsum('i,j->ij', self.r, prev_layer) * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
-		dL = update_step / 2 * (torch.einsum('i,j->ij', self.r, self.r) * torch.sign(self.c_L_hat) 
+		dW = update_step * (self.r.t() @ prev_layer * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
+		dL = update_step / 2 * (self.r.t() @ self.r * torch.sign(self.c_L_hat) 
 			- self.L * self.c_L_hat / (1 + self.network_config.gamma * self.feedback_parameter))
 
 		self.W += dW
 		self.L += dL
 
 	def feedback(self):
-		return self.network_config.gamma * self.W @ self.r
+		return self.network_config.gamma * self.r @ self.W.t() 
 
 	def activation(self, u):
 		r = torch.max(torch.min(u, torch.ones_like(u)), torch.zeros_like(u))

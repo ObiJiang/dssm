@@ -56,6 +56,7 @@ class DSSM():
 
 		# training 
 		config.num_epochs = 100
+		config.batch_size = 300
 
 		self.config = config
 
@@ -122,14 +123,15 @@ class DSSM():
 		                               torchvision.transforms.Normalize(
 		                                 (0.1307,), (0.3081,))
 		                             ])),
-		  batch_size=1, shuffle=True)
+		  batch_size=self.config.batch_size, shuffle=True)
 
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
 			conversion_ticker = 0
 			for idx, (image, _) in enumerate(train_loader):
 				image = image.to(self.config.device)
-				image = image.view(-1)
+				image = image.view([self.config.batch_size, -1])
+
 				loss_per_image, conversion_ticker_per_image = self.single_pass(image, epoch)
 				loss += 1
 				conversion_ticker += conversion_ticker_per_image
