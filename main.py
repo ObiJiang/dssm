@@ -98,7 +98,7 @@ class DSSM():
 
 				# set layer feedback input from top layer
 				if layer_ind == self.config.num_layers - 1:
-					cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])))
+					cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])), device = self.config.device)
 				else: 
 					cur_feedback = self.layers[layer_ind + 1].feedback() 
 				
