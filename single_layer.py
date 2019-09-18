@@ -32,6 +32,8 @@ class SingleLayerDSSMForMnist():
 			device = self.network_config.device) / factor
 		self.L = torch.eye(self.output_linear_dim,
 		 	device = self.network_config.device)
+		self.c_W_hat.to(self.network_config.device)
+		self.c_L_hat.to(self.network_config.device)
 		# self.L = torch.randn(self.output_linear_dim, self.output_linear_dim,
 		# 	device = self.network_config.device)
 
@@ -171,7 +173,8 @@ class SingleLayerDSSMForMnist():
 		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
-		r = torch.max(torch.min(u, torch.ones_like(u)), torch.zeros_like(u))
+		r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
+				torch.zeros_like(u, device = self.network_config.device))
 		return r
 
 	def get_output(self):
