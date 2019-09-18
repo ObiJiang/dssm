@@ -30,7 +30,7 @@ class DSSM():
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [4, 16]
+		config.nps = [4, 4]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 if config.train:
 	model = DSSM(config)
 	model.create_network()
-	# model.run()
+	model.run()
 	model.classify()
 
 	# save model

@@ -38,6 +38,7 @@ class SingleLayerDSSMForMnist():
 		# activations
 		self.u = None 
 		self.r = None
+		self.act_fn = torch.nn.Tanh()
 
 		# feedback_parameter
 		if self.layer_ind == self.network_config.num_layers - 1:
@@ -176,8 +177,9 @@ class SingleLayerDSSMForMnist():
 		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
-		r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
-				torch.zeros_like(u, device = self.network_config.device))
+		# r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
+		# 		torch.zeros_like(u, device = self.network_config.device))
+		r = self.act_fn(u)
 		return r
 
 	def get_output(self):
