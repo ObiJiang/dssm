@@ -141,7 +141,7 @@ class SingleLayerDSSMForMnist():
 
 	def dynamics(self, prev_layer, feedback, step):
 		r_save = self.r.clone()
-		du = - self.u + prev_layer @ self.W.t() - self.r @ (self.L - torch.eye(self.output_linear_dim)).t() + feedback
+		du = - self.u + prev_layer @ self.W.t() - self.r @ (self.L - torch.eye(self.output_linear_dim, device = self.network_config.device)).t() + feedback
 		
 		# Hugo's euler update rule
 		lr = max((self.network_config.euler_lr/(1+0.005*step)), 0.05)
