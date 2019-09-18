@@ -25,7 +25,7 @@ class SingleLayerDSSMForMnist():
 		self.c_L_hat = self.create_c_L().to(self.network_config.device)
 
 		# Hugo's parameter -> factor
-		factor = np.sqrt(((np.sum(self.c_W_hat.data.numpy())/self.output_dims[-1])/np.prod(self.output_dims[:-1])))
+		factor = np.sqrt(((np.sum(self.c_W_hat.cpu().data.numpy())/self.output_dims[-1])/np.prod(self.output_dims[:-1])))
 
 		# weights
 		self.W = torch.randn(self.output_linear_dim, self.input_linear_dim, 
