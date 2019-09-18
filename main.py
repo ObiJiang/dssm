@@ -60,7 +60,7 @@ class DSSM():
 
 		# training 
 		config.num_epochs = 10
-		config.batch_size = 500
+		config.batch_size = args.batch_size
 
 		# data
 		config.data_dir = args.data_dir
@@ -246,6 +246,9 @@ class DSSM():
 if __name__ == '__main__':
 	# arguments
 	parser = argparse.ArgumentParser()
+
+	# training_parameters
+	parser.add_argument('--batch_size', default=1, type=int)
 
 	# train/test
 	parser.add_argument('--train', default=False, action='store_true')
