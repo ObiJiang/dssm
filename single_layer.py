@@ -177,9 +177,9 @@ class SingleLayerDSSMForMnist():
 		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
-		# r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
-		# 		torch.zeros_like(u, device = self.network_config.device))
-		r = self.act_fn(u)
+		r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
+				torch.zeros_like(u, device = self.network_config.device))
+		# r = self.act_fn(u)
 		return r
 
 	def get_output(self):

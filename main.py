@@ -30,7 +30,7 @@ class DSSM():
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [4, 4]
+		config.nps = [4, 16]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
