@@ -21,8 +21,8 @@ class SingleLayerDSSMForMnist():
 		self.network_config = config.network_config
 
 		# connectivies
-		self.c_W_hat = self.create_c_W() # this is supposed to be reciprocal
-		self.c_L_hat = self.create_c_L()
+		self.c_W_hat = self.create_c_W().to(self.network_config.device) # this is supposed to be reciprocal
+		self.c_L_hat = self.create_c_L().to(self.network_config.device)
 
 		# Hugo's parameter -> factor
 		factor = np.sqrt(((np.sum(self.c_W_hat.data.numpy())/self.output_dims[-1])/np.prod(self.output_dims[:-1])))
@@ -32,8 +32,6 @@ class SingleLayerDSSMForMnist():
 			device = self.network_config.device) / factor
 		self.L = torch.eye(self.output_linear_dim,
 		 	device = self.network_config.device)
-		self.c_W_hat.to(self.network_config.device)
-		self.c_L_hat.to(self.network_config.device)
 		# self.L = torch.randn(self.output_linear_dim, self.output_linear_dim,
 		# 	device = self.network_config.device)
 
@@ -162,10 +160,6 @@ class SingleLayerDSSMForMnist():
 		else:
 			update_step = lr
 
-		print(self.r.t() @ prev_layer)
-		print(torch.sign(self.c_W_hat))
-		print(self.W)
-		print(self.c_W_hat)
 		dW = update_step * (self.r.t() @ prev_layer * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
 		dL = update_step / 2 * (self.r.t() @ self.r * torch.sign(self.c_L_hat) 
 			- self.L * self.c_L_hat / (1 + self.network_config.gamma * self.feedback_parameter))
