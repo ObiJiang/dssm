@@ -36,8 +36,8 @@ class SingleLayerDSSMForMnist():
 		# 	device = self.network_config.device)
 
 		# activations
-		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim, device = self.network_config.device)
-		self.r = self.activation(self.u)
+		self.u = None 
+		self.r = None
 
 		# feedback_parameter
 		if self.layer_ind == self.network_config.num_layers - 1:
@@ -47,6 +47,11 @@ class SingleLayerDSSMForMnist():
 
 	def state_dict(self):
 		return vars(self)
+
+	def initialize(self, batch_size):
+		# activations
+		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim, device = self.network_config.device)
+		self.r = self.activation(self.u)
 
 	def create_c_W(self):
 		"""
@@ -177,3 +182,6 @@ class SingleLayerDSSMForMnist():
 
 	def get_output(self):
 		return self.r
+
+	def get_output_dim(self):
+		return self.output_linear_dim
