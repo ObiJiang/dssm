@@ -36,7 +36,7 @@ class SingleLayerDSSMForMnist():
 		# 	device = self.network_config.device)
 
 		# activations
-		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim)
+		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim, device = self.network_config.device)
 		self.r = self.activation(self.u)
 
 		# feedback_parameter
