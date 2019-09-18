@@ -162,6 +162,10 @@ class SingleLayerDSSMForMnist():
 		else:
 			update_step = lr
 
+		print(self.r.t() @ prev_layer)
+		print(torch.sign(self.c_W_hat))
+		print(self.W)
+		print(self.c_W_hat)
 		dW = update_step * (self.r.t() @ prev_layer * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
 		dL = update_step / 2 * (self.r.t() @ self.r * torch.sign(self.c_L_hat) 
 			- self.L * self.c_L_hat / (1 + self.network_config.gamma * self.feedback_parameter))
