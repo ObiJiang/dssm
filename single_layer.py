@@ -29,9 +29,9 @@ class SingleLayerDSSMForMnist():
 
 		# weights
 		self.W = torch.randn(self.output_linear_dim, self.input_linear_dim, 
-			device = self.network_config.device) / factor
-		self.L = torch.eye(self.output_linear_dim,
-		 	device = self.network_config.device)
+			device = self.network_config.device) / factor * (self.c_W_hat)
+		self.L = torch.eye(self.output_linear_dim, 
+		 	device = self.network_config.device) * (self.c_L_hat)
 		# self.L = torch.randn(self.output_linear_dim, self.output_linear_dim,
 		# 	device = self.network_config.device)
 
@@ -141,45 +141,51 @@ class SingleLayerDSSMForMnist():
 		nps_view_vec = np.concatenate([self.output_dims, self.output_dims]).astype(int)
 		nps_view_vec[len(self.output_dims)-1] = 1
 		nps_view_vec[len(self.output_dims)-1 + len(self.output_dims)] = 1
-		
+
 		c_L_tile = c_L.view(list(nps_view_vec)).repeat(list(nps_repeat_vec))
 		return c_L_tile.view([self.output_linear_dim, self.output_linear_dim])
 
 	def dynamics(self, prev_layer, feedback, step):
 		r_save = self.r.clone()
-		du = - self.u + prev_layer @ self.W.t() - self.r @ (self.L - torch.eye(self.output_linear_dim, device = self.network_config.device)).t() + feedback
-		
+		du = - 1 * self.u + prev_layer @ self.W.t() - self.r @ (self.L - torch.eye(self.output_linear_dim, device = self.network_config.device)).t() + feedback
+
 		# Hugo's euler update rule
 		lr = max((self.network_config.euler_lr/(1+0.005*step)), 0.05)
 
 		self.u += lr * du
 		self.r = self.activation(self.u)
-
-		err = torch.dist(self.r, r_save, 2)
+		
+		err_all = torch.norm(self.r - r_save, p=2, dim=1)/(1e-10 + torch.norm(r_save, p=2, dim=1))
+		err = torch.mean(err_all)
 		return err.item()
 
 	def plasticity_update(self, prev_layer,epoch):
 		lr = max(self.network_config.lr/(1+self.network_config.decay*epoch), self.network_config.lr_floor)
 
 		if self.network_config.gamma > 0:
-			update_step = lr * self.network_config.gamma ** (self.layer_ind - self.network_config.num_layers)
+			update_step = lr * self.network_config.gamma ** (1 + self.layer_ind - self.network_config.num_layers)
 		else:
 			update_step = lr
 
-		dW = update_step * (self.r.t() @ prev_layer * torch.sign(self.c_W_hat) - self.W * self.c_W_hat)
-		dL = update_step / 2 * (self.r.t() @ self.r * torch.sign(self.c_L_hat) 
+		dW = update_step * (self.r.t() @ prev_layer * (self.c_W_hat) - self.W * self.c_W_hat)
+		dL = update_step / 2 * (self.r.t() @ self.r * (self.c_L_hat) 
 			- self.L * self.c_L_hat / (1 + self.network_config.gamma * self.feedback_parameter))
 
 		self.W += dW
 		self.L += dL
 
+		self.W = self.W * (self.c_W_hat)
+		self.L = self.L * (self.c_L_hat)
+
+		# self.L[range(self.output_linear_dim), range(self.output_linear_dim)] = torch.ones(self.output_linear_dim, device = self.network_config.device)
+
 	def feedback(self):
 		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
-		r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
-				torch.zeros_like(u, device = self.network_config.device))
-		# r = self.act_fn(u)
+		# r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
+		# 		 torch.zeros_like(u, device = self.network_config.device))
+		r = self.act_fn(u)
 		return r
 
 	def get_output(self):

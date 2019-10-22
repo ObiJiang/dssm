@@ -23,19 +23,19 @@ class DSSM():
 
 		input_dims = [28, 28, 1]
 		config.input_dims = np.array(input_dims)
-		config.num_layers = 2
+		config.num_layers = 1
 
 		# strides
-		config.strides = [2, 1]
+		config.strides = [2]
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [4, 16]
+		config.nps = [4]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
-		config.io_ths = [2, 4]
-		config.lateral_ths = [0, 4]
+		config.io_ths = [4]
+		config.lateral_ths = [0]
 
 		# set up number of units per layer
 		config.num_units = [config.input_dims]
@@ -45,7 +45,6 @@ class DSSM():
 			next_num_units[-1] = config.nps[i]
 			assert(next_num_units.all() > 0) # must be positive
 			config.num_units.append(next_num_units)
-
 		config.gamma = 0.00 # feedback parameter
 
 		# host and device
@@ -59,7 +58,7 @@ class DSSM():
 		config.decay = 2
 
 		# training 
-		config.num_epochs = 10
+		config.num_epochs = 2
 		config.batch_size = args.batch_size
 
 		# data
@@ -132,7 +131,7 @@ class DSSM():
 				delta[layer_ind] = self.layers[layer_ind].dynamics(cur_inp, cur_feedback, update_step)
 
 			# Hugo's parameter
-			if delta.any() < 1e-4:
+			if (delta< 1e-4).all() :
 				conversion_ticker += 1
 				break
 
@@ -167,7 +166,7 @@ class DSSM():
 				delta[layer_ind] = self.layers[layer_ind].dynamics(cur_inp, cur_feedback, update_step)
 
 			# Hugo's parameter
-			if delta.any() < 1e-4:
+			if (delta< 1e-4).all() :
 				conversion_ticker += 1
 				break
 
@@ -179,7 +178,7 @@ class DSSM():
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
 			conversion_ticker = 0
-			for idx, (image, label) in enumerate(self.train_loader):
+			for idx, (image, label) in enumerate(tqdm(self.train_loader)):
 				batch_size = image.shape[0] # input batch size
 				image = image.to(self.config.device) # move to device
 				image = image.view([batch_size, -1]) # reshape to vectors
@@ -203,7 +202,7 @@ class DSSM():
 
 		# get training data
 		start_save_idx = 0
-		for idx, (image, label) in enumerate(self.train_loader):
+		for idx, (image, label) in enumerate(tqdm(self.train_loader)):
 			batch_size = image.shape[0] # input batch size
 			image = image.to(self.config.device) # move to device
 			image = image.view([batch_size, -1]) # reshape to vectors
@@ -220,7 +219,7 @@ class DSSM():
 
 		# get test data
 		start_save_idx = 0
-		for idx, (image, label) in enumerate(self.test_loader):
+		for idx, (image, label) in enumerate(tqdm(self.test_loader)):
 			batch_size = image.shape[0] # input batch size
 			image = image.to(self.config.device) # move to device
 			image = image.view([batch_size, -1]) # reshape to vectors
@@ -235,7 +234,7 @@ class DSSM():
 
 		print("finishing getting test data ...")
 
-		clf = LinearSVC(random_state=0, tol=1e-5)
+		clf = LinearSVC(random_state=0, tol=1e-5, max_iter=10000)
 		clf.fit(train_X, train_Y)
 
 		predicated_labels = clf.predict(test_X)
@@ -263,16 +262,15 @@ if config.train:
 	model = DSSM(config)
 	model.create_network()
 	model.run()
-	model.classify()
-
 	# save model
 	torch.save(vars(model), config.model_save_dir)
+	model.classify()
 
 else:
 	load_dict = torch.load(config.model_save_dir)
-	model = DSSM()
+	model = DSSM(config)
 	model.__dict__.update(load_dict)
-	model.run()
+	model.classify()
 
 
 
