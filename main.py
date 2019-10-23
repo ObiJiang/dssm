@@ -52,7 +52,7 @@ class DSSM():
 		config.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 		# learning rate and step size
-		config.euler_lr = 0.2
+		config.euler_lr = 0.1
 		config.lr = 1e-2
 		config.lr_floor=1e-4
 		config.decay = 2
@@ -74,7 +74,7 @@ class DSSM():
 		                             transform=torchvision.transforms.Compose([
 		                               torchvision.transforms.ToTensor(),
 		                               torchvision.transforms.Normalize(
-		                                 (0.1307,), (0.3081,))
+		                                 (0.1307,), (0.3081 * 28,))
 		                             ])),
 		  batch_size=self.config.batch_size, shuffle=True)
 
@@ -84,7 +84,7 @@ class DSSM():
 		                             transform=torchvision.transforms.Compose([
 		                               torchvision.transforms.ToTensor(),
 		                               torchvision.transforms.Normalize(
-		                                 (0.1307,), (0.3081,))
+		                                 (0.1307,), (0.3081 * 28,))
 		                             ])),
 		  batch_size=self.config.batch_size, shuffle=True)
 
@@ -190,7 +190,8 @@ class DSSM():
 				# TODO: add real loss
 				loss += loss_per_image
 				conversion_ticker += conversion_ticker_per_image
-			
+			# plot the weights
+			# self.layers[0].plot_weights()
 			print("{:} Epoch: loss {:}".format(epoch, loss))
 
 	def classify(self):

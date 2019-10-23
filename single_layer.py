@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import itertools
+import matplotlib.pyplot as plt
 
 class SingleLayerDSSMForMnist():
 	"""
@@ -51,7 +52,7 @@ class SingleLayerDSSMForMnist():
 
 	def initialize(self, batch_size):
 		# activations
-		self.u = torch.zeros(self.network_config.batch_size, self.output_linear_dim, device = self.network_config.device)
+		self.u = torch.zeros(batch_size, self.output_linear_dim, device = self.network_config.device)
 		self.r = self.activation(self.u)
 
 	def create_c_W(self):
@@ -176,8 +177,13 @@ class SingleLayerDSSMForMnist():
 
 		self.W = self.W * (self.c_W_hat)
 		self.L = self.L * (self.c_L_hat)
+	
+	def plot_weights(self):
+		plt.imshow(self.W.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
+		plt.show()
 
-		# self.L[range(self.output_linear_dim), range(self.output_linear_dim)] = torch.ones(self.output_linear_dim, device = self.network_config.device)
+		plt.imshow(self.L.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
+		plt.show()
 
 	def feedback(self):
 		return self.network_config.gamma * self.r @ self.W
