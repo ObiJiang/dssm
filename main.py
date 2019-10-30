@@ -30,7 +30,7 @@ class DSSM():
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [4]
+		config.nps = [8]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
@@ -53,7 +53,7 @@ class DSSM():
 
 		# learning rate and step size
 		config.euler_lr = 0.1
-		config.lr = 1e-2
+		config.lr = 5e-3
 		config.lr_floor=1e-4
 		config.decay = 2
 
@@ -175,6 +175,7 @@ class DSSM():
 		return hid_vec
 
 	def run(self):
+		self.layers[0].plot_weights("before training")
 		for epoch in tqdm(range(self.config.num_epochs)):
 			loss = 0
 			conversion_ticker = 0
@@ -190,6 +191,8 @@ class DSSM():
 				# TODO: add real loss
 				loss += loss_per_image
 				conversion_ticker += conversion_ticker_per_image
+				# if idx % 1000 == 0:
+				# 	print("Average Converged Rate {:}".format(conversion_ticker / (idx + 1)))
 			# plot the weights
 			# self.layers[0].plot_weights()
 			print("{:} Epoch: loss {:}".format(epoch, loss))

@@ -178,20 +178,22 @@ class SingleLayerDSSMForMnist():
 		self.W = self.W * (self.c_W_hat)
 		self.L = self.L * (self.c_L_hat)
 	
-	def plot_weights(self):
-		plt.imshow(self.W.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
-		plt.show()
+	def plot_weights(self, name):
+		im = plt.imshow(self.W.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
+		plt.colorbar(im)
+		plt.savefig(name + "_w.png")
 
-		plt.imshow(self.L.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
-		plt.show()
+		im = plt.imshow(self.L.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
+		plt.colorbar(im)
+		plt.savefig(name + "_l.png")
 
 	def feedback(self):
 		return self.network_config.gamma * self.r @ self.W
 
 	def activation(self, u):
-		# r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
-		# 		 torch.zeros_like(u, device = self.network_config.device))
-		r = self.act_fn(u)
+		r = torch.max(torch.min(u, torch.ones_like(u, device = self.network_config.device)), 
+				 torch.zeros_like(u, device = self.network_config.device))
+		# r = self.act_fn(u)
 		return r
 
 	def get_output(self):
