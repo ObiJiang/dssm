@@ -3,7 +3,7 @@ import torchvision
 import numpy as np
 
 # single DSSM layer
-from single_layer import SingleLayerDSSMForMnist
+from single_layer import SingleLayerDSSMForMnist, SingleLayerDSSMForMnistSpike
 # classification
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
@@ -30,7 +30,7 @@ class DSSM():
 		assert(len(config.strides) == config.num_layers)
 
 		# nps
-		config.nps = [8]
+		config.nps = [4]
 		assert(len(config.nps) == config.num_layers)
 
 		# dist thresholds
@@ -58,7 +58,7 @@ class DSSM():
 		config.decay = 2
 
 		# training 
-		config.num_epochs = 2
+		config.num_epochs = args.num_epochs
 		config.batch_size = args.batch_size
 
 		# data
@@ -74,7 +74,7 @@ class DSSM():
 		                             transform=torchvision.transforms.Compose([
 		                               torchvision.transforms.ToTensor(),
 		                               torchvision.transforms.Normalize(
-		                                 (0.1307,), (0.3081 * 28,))
+		                                 (0.1307,), (0.3081 * 14,))
 		                             ])),
 		  batch_size=self.config.batch_size, shuffle=True)
 
@@ -84,7 +84,7 @@ class DSSM():
 		                             transform=torchvision.transforms.Compose([
 		                               torchvision.transforms.ToTensor(),
 		                               torchvision.transforms.Normalize(
-		                                 (0.1307,), (0.3081 * 28,))
+		                                 (0.1307,), (0.3081 * 14,))
 		                             ])),
 		  batch_size=self.config.batch_size, shuffle=True)
 
@@ -103,37 +103,29 @@ class DSSM():
 			#network-wise config
 			mnist_config.network_config = self.config
 
-			self.layers[layer_ind] = SingleLayerDSSMForMnist(mnist_config)
+			# self.layers[layer_ind] = SingleLayerDSSMForMnist(mnist_config)
+			self.layers[layer_ind] = SingleLayerDSSMForMnistSpike(mnist_config)
 
-	def init_layers_states(self, batch_size):
+	def init_layers_states_spike(self, x):
 		for layer_ind in range(self.config.num_layers):
-			self.layers[layer_ind].initialize(batch_size)
+			self.layers[layer_ind].init_v_i(x)
 
 	def train(self, inp, epoch):
 		# neural dynamics loop
-		delta = np.ones(self.config.num_layers) * np.inf
-		conversion_ticker = 0
-		for update_step in range(3000):
+		for layer_ind in range(self.config.num_layers):
+			# set layer input
+			if layer_ind == 0:
+				cur_inp = inp
+			else:
+				cur_inp = self.layers[layer_ind - 1].get_output()
 
-			for layer_ind in range(self.config.num_layers):
-				# set layer input
-				if layer_ind == 0:
-					cur_inp = inp
-				else:
-					cur_inp = self.layers[layer_ind - 1].get_output()
-
-				# set layer feedback input from top layer
-				if layer_ind == self.config.num_layers - 1:
-					cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])), device = self.config.device)
-				else: 
-					cur_feedback = self.layers[layer_ind + 1].feedback() 
-				
-				delta[layer_ind] = self.layers[layer_ind].dynamics(cur_inp, cur_feedback, update_step)
-
-			# Hugo's parameter
-			if (delta< 1e-4).all() :
-				conversion_ticker += 1
-				break
+			# set layer feedback input from top layer
+			if layer_ind == self.config.num_layers - 1:
+				cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])), device = self.config.device)
+			else: 
+				cur_feedback = self.layers[layer_ind + 1].feedback() 
+			
+			self.layers[layer_ind].dynamics(cur_inp)
 
 		for layer_ind in range(self.config.num_layers):
 			if layer_ind == 0:
@@ -142,33 +134,22 @@ class DSSM():
 				cur_inp = self.layers[layer_ind - 1].get_output()
 			self.layers[layer_ind].plasticity_update(cur_inp, epoch)
 
-		return delta.sum(), conversion_ticker
-
 	def test(self, inp):
 		# neural dynamics loop
-		delta = np.ones(self.config.num_layers) * np.inf
-		conversion_ticker = 0
-		for update_step in range(3000):
+		for layer_ind in range(self.config.num_layers):
+			# set layer input
+			if layer_ind == 0:
+				cur_inp = inp
+			else:
+				cur_inp = self.layers[layer_ind - 1].get_output()
 
-			for layer_ind in range(self.config.num_layers):
-				# set layer input
-				if layer_ind == 0:
-					cur_inp = inp
-				else:
-					cur_inp = self.layers[layer_ind - 1].get_output()
-
-				# set layer feedback input from top layer
-				if layer_ind == self.config.num_layers - 1:
-					cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])), device = self.config.device)
-				else: 
-					cur_feedback = self.layers[layer_ind + 1].feedback() 
-				
-				delta[layer_ind] = self.layers[layer_ind].dynamics(cur_inp, cur_feedback, update_step)
-
-			# Hugo's parameter
-			if (delta< 1e-4).all() :
-				conversion_ticker += 1
-				break
+			# set layer feedback input from top layer
+			if layer_ind == self.config.num_layers - 1:
+				cur_feedback = torch.zeros(int(np.prod(self.config.num_units[-1])), device = self.config.device)
+			else: 
+				cur_feedback = self.layers[layer_ind + 1].feedback() 
+			
+			self.layers[layer_ind].dynamics(cur_inp)
 
 			hid_vec = self.layers[self.config.num_layers-1].get_output().cpu().data
 
@@ -185,17 +166,14 @@ class DSSM():
 				image = image.view([batch_size, -1]) # reshape to vectors
 
 				# init states u and v based on input batch size
-				self.init_layers_states(batch_size)
+				self.init_layers_states_spike(image)
 
-				loss_per_image, conversion_ticker_per_image = self.train(image, epoch)
-				# TODO: add real loss
-				loss += loss_per_image
-				conversion_ticker += conversion_ticker_per_image
+				self.train(image, epoch)
 				# if idx % 1000 == 0:
 				# 	print("Average Converged Rate {:}".format(conversion_ticker / (idx + 1)))
 			# plot the weights
-			# self.layers[0].plot_weights()
-			print("{:} Epoch: loss {:}".format(epoch, loss))
+			self.layers[0].plot_weights("training_" + str(epoch))
+			print("{:}".format(epoch))
 
 	def classify(self):
 		fea_dim = self.layers[self.config.num_layers-1].get_output_dim()
@@ -212,7 +190,7 @@ class DSSM():
 			image = image.view([batch_size, -1]) # reshape to vectors
 
 			# init states u and v based on input batch size
-			self.init_layers_states(batch_size)
+			self.init_layers_states_spike(image)
 			fea = self.test(image)
 
 			train_X[start_save_idx: start_save_idx + batch_size, :] = fea
@@ -229,7 +207,7 @@ class DSSM():
 			image = image.view([batch_size, -1]) # reshape to vectors
 
 			# init states u and v based on input batch size
-			self.init_layers_states(batch_size)
+			self.init_layers_states_spike(image)
 			fea = self.test(image)
 
 			test_X[start_save_idx: start_save_idx + batch_size, :] = fea
@@ -252,6 +230,7 @@ if __name__ == '__main__':
 
 	# training_parameters
 	parser.add_argument('--batch_size', default=1, type=int)
+	parser.add_argument('--num_epochs', default=1, type=int)
 
 	# train/test
 	parser.add_argument('--train', default=False, action='store_true')
