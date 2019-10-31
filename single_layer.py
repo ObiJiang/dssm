@@ -182,12 +182,12 @@ class SingleLayerDSSMForMnist():
         plt.figure()
         im = plt.imshow(self.W.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
         plt.colorbar(im)
-        plt.savefig(name + "_w.png")
+        plt.savefig(self.network_config.weight_save_dir + "/"+ name + "_w.png")
 
         plt.figure()
         im = plt.imshow(self.L.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
         plt.colorbar(im)
-        plt.savefig(name + "_l.png")
+        plt.savefig(self.network_config.weight_save_dir + "/"+name + "_l.png")
 
     def feedback(self):
         return self.network_config.gamma * self.r @ self.W
