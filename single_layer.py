@@ -241,7 +241,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
 
         # firing rate bounds
         config.lower_bound = 0
-        config.upper_bound = 2
+        config.upper_bound = 1
 
         # opt param
         config.lambda_1 = 0.0

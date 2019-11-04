@@ -54,7 +54,7 @@ class DSSM():
 
         # learning rate and step size
         config.euler_lr = 0.1
-        config.lr = 5e-3
+        config.lr = 1e-2
         config.lr_floor=1e-4
         config.decay = 2
 
