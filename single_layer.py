@@ -241,7 +241,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
 
         # firing rate bounds
         config.lower_bound = 0
-        config.upper_bound = 1
+        config.upper_bound = 2
 
         # opt param
         config.lambda_1 = 0.0
@@ -251,7 +251,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
         config.dt = 1.0
 
         # spiking param
-        config.dt_s = 0.01
+        config.dt_s = 0.1
         if config.dt_s >= 1/config.upper_bound:
             config.dt_r = 0
         else:
@@ -312,14 +312,15 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
         self.refactory_clock[fire_mask] = self.dt_r
 
     def dynamics(self, x):
-        for _ in range(30000):
+        for _ in range(20000):
+            self.y_save = self.y.clone()
             self.time_tick += 1
 
             mask = self._integ_mask()
             self._refactory_counting()
             
             # spike dynamics
-            di_s = - self.i_s +  x @ self.W.t() - self.lambda_1 -  self.delta.float() @ self.L_hat.t()
+            di_s = - self.i_s +  x @ self.W.t() - self.lambda_1 -  (self.delta.float() /self.dt_s) @ self.L_hat.t()
             self.i_s += di_s * self.dt_s * mask.float()
             self.v_s += self.i_s * self.dt_s * mask.float()
             
@@ -330,7 +331,20 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
                 pass
                 # print(self.time_tick, self.y)
                 # print(self.time_tick, self.y[self.y > 0])
-        
+                # err_all = torch.norm(self.y - self.y_save, p=2, dim=1)/(1e-10 + torch.norm( self.y_save, p=2, dim=1))
+                # err = torch.mean(err_all)
+                # print(self.time_tick, err.item())
+
+            if self.time_tick > 10000:
+                pass
+                # err_all = torch.norm(self.y - self.y_save, p=2, dim=1)/(1e-10 + torch.norm( self.y_save, p=2, dim=1))
+                # err = torch.mean(err_all)
+
+                # if err < 5e-4:
+                #     print(self.time_tick, err.item())
+                #     print(self.time_tick, self.y[self.y > 0])
+                #     break
+
         return self.y
 
     
