@@ -183,11 +183,13 @@ class SingleLayerDSSMForMnist():
         im = plt.imshow(self.W.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
         plt.colorbar(im)
         plt.savefig(self.network_config.weight_save_dir + "/"+ name + "_w.png")
+        np.save(self.network_config.weight_save_dir + "/"+ name + "_" + "w.npy", self.W.cpu().numpy())
 
         plt.figure()
         im = plt.imshow(self.L.cpu().numpy(), aspect='auto', interpolation='none', origin='lower')
         plt.colorbar(im)
         plt.savefig(self.network_config.weight_save_dir + "/"+name + "_l.png")
+        np.save(self.network_config.weight_save_dir + "/"+ name + "_" + "l.npy", self.L.cpu().numpy())
 
     def feedback(self):
         return self.network_config.gamma * self.r @ self.W
@@ -241,7 +243,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
 
         # firing rate bounds
         config.lower_bound = 0
-        config.upper_bound = 2
+        config.upper_bound = 10
 
         # opt param
         config.lambda_1 = 0.0

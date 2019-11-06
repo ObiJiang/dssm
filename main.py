@@ -202,8 +202,8 @@ class DSSM():
             start_save_idx += batch_size
 
         print("finishing getting training data ...")
-        np.save(self.config.weight_save_dir + "/"+ "training" + "act.npy", train_X[:10, :])
-        np.save(self.config.weight_save_dir + "/"+ "training" + "label.npy", train_Y[:10])
+        np.save(self.config.weight_save_dir + "/"+ "training" + "act.npy", train_X[:20, :])
+        np.save(self.config.weight_save_dir + "/"+ "training" + "label.npy", train_Y[:20])
 
         # get test data
         start_save_idx = 0
