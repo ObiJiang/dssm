@@ -168,6 +168,7 @@ class DSSM():
                 batch_size = image.shape[0] # input batch size
                 image = image.to(self.config.device) # move to device
                 image = image.view([batch_size, -1]) # reshape to vectors
+                image -= image.mean(axis=0)
 
                 # init states u and v based on input batch size
                 self.init_layers_states_spike(image)
@@ -192,7 +193,7 @@ class DSSM():
             batch_size = image.shape[0] # input batch size
             image = image.to(self.config.device) # move to device
             image = image.view([batch_size, -1]) # reshape to vectors
-
+            image -= image.mean(axis=0)
             # init states u and v based on input batch size
             self.init_layers_states_spike(image)
             fea = self.test(image)
@@ -211,7 +212,7 @@ class DSSM():
             batch_size = image.shape[0] # input batch size
             image = image.to(self.config.device) # move to device
             image = image.view([batch_size, -1]) # reshape to vectors
-
+            image -= image.mean(axis=0)
             # init states u and v based on input batch size
             self.init_layers_states_spike(image)
             fea = self.test(image)

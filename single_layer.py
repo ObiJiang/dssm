@@ -243,7 +243,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
 
         # firing rate bounds
         config.lower_bound = 0
-        config.upper_bound = 10
+        config.upper_bound = 1
 
         # opt param
         config.lambda_1 = 0.0
@@ -265,6 +265,7 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
         self.dt_r = config.dt_r
         self.v_r = config.v_r
         self.lambda_1 = config.lambda_1
+        self.lambda_2 = config.lambda_2
         self.nb_units = self.output_linear_dim
         self.v_f_adjustment = 0.0
         
@@ -368,6 +369,12 @@ class SingleLayerDSSMForMnistSpike(SingleLayerDSSMForMnist):
         self.W = self.W * (self.c_W_hat)
         self.L = self.L * (self.c_L_hat)
 
+        self.L_diag = torch.diagonal(self.L)
+        self.L_hat = self.L - torch.diag(torch.diagonal(self.L)) + self.v_f_adjustment*torch.eye(self.nb_units, device = self.network_config.device)
+        
+        # The firing rate for neuron 2 should be lambda_2 + L_ii
+        self.v_f = self.lambda_2 + self.L_diag - self.v_f_adjustment
+        
     def get_output(self):
         return self.y
 
